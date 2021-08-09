@@ -33,15 +33,17 @@ struct Mac final {
 	bool operator == (const uint8_t* r) const { return memcmp(mac_, r, SIZE) == 0; }
 
 	void clear() {
-		*this = nullMac();
+		for (int i = 0; i < SIZE; i++) mac_[i] = 0;
 	}
 
 	bool isNull() const {
-		return *this == nullMac();
+		for (int i = 0; i < SIZE; i++) if (mac_[i] != 0) return false;
+		return true;
 	}
 
 	bool isBroadcast() const { // FF:FF:FF:FF:FF:FF
-		return *this == broadcastMac();
+		for (int i = 0; i < SIZE; i++) if (mac_[i] != 0xFF) return false;
+		return true;
 	}
 
 	bool isMulticast() const { // 01:00:5E:0*
@@ -56,11 +58,20 @@ protected:
 	uint8_t mac_[SIZE];
 };
 
-namespace std {
-	template<>
-	struct hash<Mac> {
-		size_t operator() (const Mac& r) const {
-			return std::_Hash_impl::hash(&r, Mac::SIZE);
-		}
-	};
-}
+// namespace std {
+// 	template<>
+// 	struct hash<Mac> {
+// 		typedef unsigned char byte;
+// 		typedef unsigned char *pbyte;
+// 		size_t operator() (const Mac& r) const {
+// #ifdef __ANDROID__
+// 			byte* p = pbyte(&r);
+// 			size_t res = 0;
+// 			for(size_t i = 0; i < Mac::SIZE; ++i) res = res * 31 + size_t(*p++);
+// 			return res;
+// #else // __ANDROID__
+// 			return std::_Hash_impl::hash(&r, Mac::SIZE);
+// #endif // __ANDROID__
+// 		}
+// 	};
+// }

@@ -24,8 +24,9 @@ int main(int argc, char *argv[])
     }
 
     Ip attacker_ip = dev.getIp();
-    printf("interface: %s\tip address: %s\n", std::string(dev).c_str(), std::string(attacker_ip).c_str());
-    // Mac attacker_mac = dev.getMac();
+    // printf("interface: %s\tip address: %s\n", std::string(dev).c_str(), std::string(attacker_ip).c_str());
+    Mac attacker_mac = dev.getMac();
+    // printf("interface: %s\tmac address: %s\n", std::string(dev).c_str(), std::string(attacker_mac).c_str());
 
     pcap_close(handle);
     return 0;

@@ -3,6 +3,10 @@
 #include <string>
 #include "dev.h"
 
+#include <sys/sysctl.h>
+#include <net/if.h>
+#include <net/if_dl.h>
+
 /* REFERENCE: https://man7.org/linux/man-pages/man3/getifaddrs.3.html */
 Ip Dev::getIp() const
 {
@@ -39,4 +43,39 @@ Ip Dev::getIp() const
     }
 
     exit(-1);
+}
+
+/* REFERENCE: https://stackoverflow.com/questions/10593736/mac-address-from-interface-on-os-x-c */
+Mac Dev::getMac() const
+{
+    int mib[6] = {CTL_NET, AF_ROUTE, 0, AF_LINK, NET_RT_IFLIST};
+    if ((mib[5] = if_nametoindex(std::string(dev_).c_str())) == 0)
+    {
+        perror("if_nametoindex error");
+        exit(-1);
+    }
+
+    size_t len;
+    if (sysctl(mib, 6, NULL, &len, NULL, 0) < 0)
+    {
+        perror("sysctl 1 error");
+        exit(-1);
+    }
+
+    char *buf;
+    if ((buf = (char *)malloc(len)) == NULL)
+    {
+        perror("malloc error");
+        exit(-1);
+    }
+
+    if (sysctl(mib, 6, buf, &len, NULL, 0) < 0)
+    {
+        perror("sysctl 2 error");
+        exit(-1);
+    }
+
+    if_msghdr *ifm = (if_msghdr *)buf;
+    sockaddr_dl *sdl = (sockaddr_dl *)(ifm + 1);
+    return Mac((uint8_t *)LLADDR(sdl));
 }
