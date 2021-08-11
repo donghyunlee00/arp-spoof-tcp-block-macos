@@ -6,13 +6,28 @@
 
 struct Dev final
 {
-    Dev(const std::string r) : dev_(r) {}
+    void setIfa(std::string ifa)
+    {
+        ifa_ = ifa;
+        ipset_ = false;
+        mac_ = Mac::nullMac();
+    }
 
-    explicit operator std::string() const { return dev_; }
+    void setIp(Ip ip)
+    {
+        ip_ = ip;
+        ipset_ = true;
+    }
 
-    Ip getIp() const;
-    Mac getMac() const;
+    void setMac(Mac mac) { mac_ = mac; }
+
+    std::string ifa() const { return ifa_; }
+    Ip myIp();
+    Mac myMac();
 
 protected:
-    std::string dev_;
+    std::string ifa_;
+    Ip ip_;
+    bool ipset_;
+    Mac mac_;
 };

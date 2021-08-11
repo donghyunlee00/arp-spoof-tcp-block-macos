@@ -14,19 +14,32 @@ int main(int argc, char *argv[])
     if (argc < 4)
         usage();
 
-    Dev dev = Dev(argv[1]);
+    Dev attacker;
+    attacker.setIfa(std::string(argv[1]));
+
     char errbuf[PCAP_ERRBUF_SIZE];
-    pcap_t *handle = pcap_open_live(std::string(dev).c_str(), BUFSIZ, 1, 1000, errbuf);
+    pcap_t *handle = pcap_open_live(attacker.ifa().c_str(), BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL)
     {
-        fprintf(stderr, "Couldn't open device %s: %s\n", std::string(dev).c_str(), errbuf);
+        fprintf(stderr, "Couldn't open device %s: %s\n", attacker.ifa().c_str(), errbuf);
         return -1;
     }
 
-    Ip attacker_ip = dev.getIp();
-    // printf("interface: %s\tip address: %s\n", std::string(dev).c_str(), std::string(attacker_ip).c_str());
-    Mac attacker_mac = dev.getMac();
-    // printf("interface: %s\tmac address: %s\n", std::string(dev).c_str(), std::string(attacker_mac).c_str());
+    printf("interface: %s\tip address: %s\n", attacker.ifa().c_str(), std::string(attacker.myIp()).c_str());
+    printf("interface: %s\tmac address: %s\n", attacker.ifa().c_str(), std::string(attacker.myMac()).c_str());
+
+    // int num_victim = (argc - 2) / 2;
+    // Flow *flow = new Flow[num_victim];
+    // for (int i = 0; i < num_victim; i++)
+    // {
+    //     flow[i].sender_ip = Ip(argv[(i + 1) * 2]);
+    //     myMac(handle, attacker_ip, attacker_mac, flow[i].sender_ip, &flow[i].sender_mac);
+
+    //     flow[i].target_ip = Ip(argv[(i + 1) * 2 + 1]);
+    //     myMac(handle, attacker_ip, attacker_mac, flow[i].target_ip, &flow[i].target_mac);
+
+    //     arpInfect(handle, attacker_mac, flow[i].sender_ip, flow[i].sender_mac, flow[i].target_ip);
+    // }
 
     pcap_close(handle);
     return 0;

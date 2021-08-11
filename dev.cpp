@@ -1,15 +1,17 @@
 #include <pcap.h>
 #include <ifaddrs.h>
 #include <string>
-#include "dev.h"
-
 #include <sys/sysctl.h>
 #include <net/if.h>
 #include <net/if_dl.h>
+#include "dev.h"
 
 /* REFERENCE: https://man7.org/linux/man-pages/man3/getifaddrs.3.html */
-Ip Dev::getIp() const
+Ip Dev::myIp()
 {
+    if (ipset_)
+        return ip_;
+
     ifaddrs *ifaddr;
     if (getifaddrs(&ifaddr) == -1)
     {
@@ -17,7 +19,7 @@ Ip Dev::getIp() const
         exit(-1);
     }
 
-    const char *dev = dev_.c_str();
+    const char *dev = ifa_.c_str();
     size_t devlen = strlen(dev);
     for (ifaddrs *ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next)
     {
@@ -38,18 +40,23 @@ Ip Dev::getIp() const
             printf("getnameinfo() failed: %s\n", gai_strerror(s));
             exit(-1);
         }
+
         freeifaddrs(ifaddr);
-        return Ip(host);
+        ipset_ = true;
+        return ip_ = Ip(host);
     }
 
     exit(-1);
 }
 
 /* REFERENCE: https://stackoverflow.com/questions/10593736/mac-address-from-interface-on-os-x-c */
-Mac Dev::getMac() const
+Mac Dev::myMac()
 {
+    if (!mac_.isNull())
+        return mac_;
+
     int mib[6] = {CTL_NET, AF_ROUTE, 0, AF_LINK, NET_RT_IFLIST};
-    if ((mib[5] = if_nametoindex(std::string(dev_).c_str())) == 0)
+    if ((mib[5] = if_nametoindex(std::string(ifa_).c_str())) == 0)
     {
         perror("if_nametoindex error");
         exit(-1);
@@ -77,5 +84,5 @@ Mac Dev::getMac() const
 
     if_msghdr *ifm = (if_msghdr *)buf;
     sockaddr_dl *sdl = (sockaddr_dl *)(ifm + 1);
-    return Mac((uint8_t *)LLADDR(sdl));
+    return mac_ = Mac((uint8_t *)LLADDR(sdl));
 }
